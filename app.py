@@ -158,6 +158,10 @@ def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
 
 # --------------------------------------------------------------------------- #
 
+@app.get("/info")
+def get_info():
+    return {"public_key": PUBLIC_KEY, "ping_cooldown": USER_PING_COOLDOWN}
+
 @app.post("/user/register")
 def post_user_register():
     #Random user ID
