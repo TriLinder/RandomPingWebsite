@@ -21,7 +21,7 @@ db_thread_lock = threading.Lock()
 ping_processing_lock = threading.Lock()
 
 def connect_db():
-    db_thread_lock.acquire(timeout=5)
+    db_thread_lock.acquire(timeout=3)
 
     conn = sqlite3.connect(SQLITE_DB_PATH)
     cursor = conn.cursor()
@@ -59,10 +59,24 @@ def create_db_tables():
     conn.commit()
     disconnect_db(conn)
 
-def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origin=True, ignore_user_ping_cooldown=False):
+def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origin=True, ignore_multiple_replies=False, ignore_user_ping_cooldown=False):
     conn, cursor = connect_db()
 
-    #Check if the sending user can indeed send a ping
+    #In case of a reply, check that the original ping wasn't already replied to and specify to_user
+    if reply_to:
+        cursor.execute("SELECT COUNT(*) FROM pings WHERE reply_to = ?", (reply_to,))
+        count = cursor.fetchone()[0]
+        
+        #The original ping was already replied to
+        if count >= 1 and not ignore_multiple_replies:
+            disconnect_db(conn)
+            return {"ok": False, "error": "You have already replied to this ping."}
+        
+        #Find the target user's id
+        cursor.execute("SELECT from_user FROM pings WHERE id = ?", (reply_to,))
+        to_user = cursor.fetchone()[0]
+
+    #Check if the sending user can send a ping (that they aren't on cooldown)
     cursor.execute("SELECT next_allowed_ping_timestamp FROM users WHERE id = ?", (from_user,))
     next_allowed_ping_timestamp = cursor.fetchone()[0]
 
@@ -116,7 +130,7 @@ def process_waiting_pings():
             }
 
             print(f"Sending ping {ping_id}")
-            webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
+            #webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
             print(f"Sent ping {ping_id}")
 
             state = "success"
@@ -187,6 +201,15 @@ def post_ping_random():
 
     from_user = uuid.UUID(data["user_id"]).hex
     return create_ping(from_user)
+
+@app.post("/ping/reply")
+def post_ping_reply():
+    data = request.json
+
+    from_user = uuid.UUID(data["user_id"]).hex
+    reply_to = uuid.UUID(data["reply_to"]).hex
+
+    return create_ping(from_user, reply_to=reply_to)
 
 if __name__ == "__main__":
     create_db_tables()
