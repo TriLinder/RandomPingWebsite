@@ -10,7 +10,7 @@
     let currentTime = new Date();
     $: timeUntilNextAllowedPing = nextAllowedPingTimestamp.getTime() - currentTime.getTime();
 
-    let pingSoundEffect = new Audio("/static/ping.mp3"); 
+    const pingSoundEffect = new Audio("/static/ping.mp3"); 
     let displayCountryOfOrigin = true;
 
     async function pingButtonClick() {

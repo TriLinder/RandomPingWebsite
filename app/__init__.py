@@ -241,9 +241,8 @@ def post_ping_reply():
 
     from_user = uuid.UUID(data["user_id"]).hex
     reply_to = uuid.UUID(data["reply_to"]).hex
-    display_country_of_origin = bool(data["display_country_of_origin"])
 
-    return create_ping(from_user, reply_to=reply_to, display_country_of_origin=display_country_of_origin)
+    return create_ping(from_user, reply_to=reply_to)
 
 if __name__ == "__main__":
     create_db_tables()

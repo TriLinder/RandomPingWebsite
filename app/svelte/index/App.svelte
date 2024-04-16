@@ -5,8 +5,9 @@
 
 	import Register from "./pages/Register.svelte";
 	import SendRandomPing from "./pages/SendRandomPing.svelte";
+    import ReplyToPing from "./pages/ReplyToPing.svelte";
 	
-	let currentPage: "loading" | "register" | "sendRandomPing" = "loading";
+	let currentPage: "loading" | "register" | "sendRandomPing" | "replyToPing" = "loading";
 
 	onMount(async function() {
 		// Mount the service worker
@@ -23,7 +24,11 @@
 				return;
 			}
 
-			currentPage = "sendRandomPing";
+			if (window.location.hash.length > 1) {
+				currentPage = "replyToPing";
+			} else {
+				currentPage = "sendRandomPing";
+			}
 		} else {
 			currentPage = "register";
 		}
@@ -60,6 +65,8 @@
 			<Register on:registered={function() {currentPage = "sendRandomPing"}}/>
 		{:else if currentPage == "sendRandomPing"}
 			<SendRandomPing/>
+		{:else if currentPage == "replyToPing"}
+			<ReplyToPing on:returnToRandomPingPage={function() {currentPage = "sendRandomPing"}}/>
 		{/if}
 	</div>
 </div>

@@ -83,8 +83,13 @@ export async function updatePushServiceSubscriptionObject(subscription: PushSubs
         })
     });
 
+    // Handle errors
     if (response.status != 200) {
         throw Error(`Unexpected status code: ${response.status}`);
+    }
+    const json = await response.json();
+    if (!json.ok) {
+        throw Error(json.error);
     }
 }
 
@@ -105,7 +110,38 @@ export async function sendRandomPing(displayCountryOfOrigin = true) {
         })
     });
 
+    // Handle errors
     if (response.status != 200) {
         throw Error(`Unexpected status code: ${response.status}`);
+    }
+    const json = await response.json();
+    if (!json.ok) {
+        throw Error(json.error);
+    }
+}
+
+export async function replyToPing(replyTo: string) {
+    if (!get(persistentDataStore).userInformation) {
+        throw Error("User information not available")
+    }
+    
+    const response = await fetch("/ping/reply", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: get(persistentDataStore).userInformation?.id,
+            reply_to: replyTo
+        })
+    });
+
+    // Handle errors
+    if (response.status != 200) {
+        throw Error(`Unexpected status code: ${response.status}`);
+    }
+    const json = await response.json();
+    if (!json.ok) {
+        throw Error(json.error);
     }
 }
