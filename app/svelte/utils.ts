@@ -89,7 +89,7 @@ export async function updatePushServiceSubscriptionObject(subscription: PushSubs
 }
 
 
-export async function sendRandomPing() {
+export async function sendRandomPing(displayCountryOfOrigin = true) {
     if (!get(persistentDataStore).userInformation) {
         throw Error("User information not available")
     }
@@ -100,7 +100,8 @@ export async function sendRandomPing() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            user_id: get(persistentDataStore).userInformation?.id
+            user_id: get(persistentDataStore).userInformation?.id,
+            display_country_of_origin: displayCountryOfOrigin
         })
     });
 

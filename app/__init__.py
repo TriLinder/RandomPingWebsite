@@ -164,12 +164,12 @@ def country_iso_code_to_emoji(country_iso_code):
 
 def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
     if is_reply: #Never reveal country of origin in a reply
-        return "Somebody pinged you back!"
+        return "Somebody has pinged you back!"
     
     if display_country_of_origin:
         return f"Somebody from {country_iso_code_to_emoji(country_of_origin)} has pinged you!"
     else:
-        return "Somebody pinged you!"
+        return "Somebody has pinged you!"
 
 # --------------------------------------------------------------------------- #
 
@@ -227,7 +227,9 @@ def post_ping_random():
     data = request.json
 
     from_user = uuid.UUID(data["user_id"]).hex
-    return create_ping(from_user)
+    display_country_of_origin = bool(data["display_country_of_origin"])
+
+    return create_ping(from_user, display_country_of_origin=display_country_of_origin)
 
 @app.post("/ping/reply")
 def post_ping_reply():
@@ -235,8 +237,9 @@ def post_ping_reply():
 
     from_user = uuid.UUID(data["user_id"]).hex
     reply_to = uuid.UUID(data["reply_to"]).hex
+    display_country_of_origin = bool(data["display_country_of_origin"])
 
-    return create_ping(from_user, reply_to=reply_to)
+    return create_ping(from_user, reply_to=reply_to, display_country_of_origin=display_country_of_origin)
 
 if __name__ == "__main__":
     create_db_tables()

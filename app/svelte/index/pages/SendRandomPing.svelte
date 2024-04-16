@@ -11,6 +11,7 @@
     $: timeUntilNextAllowedPing = nextAllowedPingTimestamp.getTime() - currentTime.getTime();
 
     let pingSoundEffect = new Audio("/static/ping.mp3"); 
+    let displayCountryOfOrigin = true;
 
     async function pingButtonClick() {
         // Update ping cooldown now, for visual effect
@@ -32,7 +33,7 @@
 
         // Send ping
         try {
-            await sendRandomPing();
+            await sendRandomPing(displayCountryOfOrigin);
             $persistentDataStore.stats.sentPingsCount += 1;
 
             // Update ping cooldown again for actual cooldown functionality
@@ -56,10 +57,15 @@
 
 <!-- Ensure correct plural form -->
 {#if $persistentDataStore.stats.sentPingsCount != 1}
-    <p>You've sent {$persistentDataStore.stats.sentPingsCount} pings.</p>
+    <span>You've sent {$persistentDataStore.stats.sentPingsCount} pings.</span>
 {:else}
-    <p>You've sent {$persistentDataStore.stats.sentPingsCount} ping.</p>
+    <span>You've sent {$persistentDataStore.stats.sentPingsCount} ping.</span>
 {/if}
+
+<label>
+    <input bind:checked={displayCountryOfOrigin} type="checkbox">
+    Include the country of origin in the ping ({$persistentDataStore.userInformation.country.emoji})
+</label>
 
 <!-- The main ping button -->
 <Button on:click={pingButtonClick} disabled={timeUntilNextAllowedPing >= 0} color="primary" size="lg">
