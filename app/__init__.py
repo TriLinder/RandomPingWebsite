@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_svelte import render_template
 import sqlite3
 import uuid
@@ -159,9 +159,13 @@ def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
 
 # --------------------------------------------------------------------------- #
 
-@app.route('/')
-def index():
-    return render_template('index.html', name='World')
+@app.get('/')
+def get_index():
+    return render_template("index.html")
+
+@app.get("/sw.js")
+def get_service_worker():
+    return send_file("static/service-worker.js")
 
 @app.get("/info")
 def get_info():

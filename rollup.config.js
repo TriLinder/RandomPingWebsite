@@ -8,6 +8,7 @@ import css from 'rollup-plugin-css-only';
 import sveltePreprocess from 'svelte-preprocess';
 import autoprefixer from 'autoprefixer';
 import watchGlobs from 'rollup-plugin-watch-globs';
+import typescript from '@rollup/plugin-typescript';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -39,13 +40,7 @@ function rollupPlugins(index) {
 				// enable run-time checks when not in production
 				dev: !production
 			},
-			preprocess: sveltePreprocess({
-				postcss: {
-					plugins: [,
-						autoprefixer
-					]
-				}
-			})
+			preprocess: sveltePreprocess({})
 		}),
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
@@ -69,7 +64,9 @@ function rollupPlugins(index) {
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify
-		production && terser()
+		production && terser(),
+
+		typescript()
 	]
 
 	if (index === 0 && !production) {
