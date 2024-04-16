@@ -43,3 +43,9 @@ export const persistentDataStore = writable<PersistentDataStore>(loadPersistentD
 persistentDataStore.subscribe(function(value) {
     localStorage.setItem("trilinder.randomnotificationsite.persistentDataStore", JSON.stringify(value));
 });
+
+window.addEventListener("storage", function(event) {
+    if (event.key == "trilinder.randomnotificationsite.persistentDataStore") {
+        persistentDataStore.set(loadPersistentDataStore());
+    }
+});
