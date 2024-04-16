@@ -129,11 +129,15 @@ def process_waiting_pings():
                 "title": "Random ping received!",
                 "options": {
                     "id": ping_id,
-                    "body": ping_text
+                    "body": ping_text,
+                    "data": {
+                        "url": f"/#{ping_id}"
+                    }
                 }
             }
 
             print(f"Sending ping {ping_id}")
+            #TODO: Remove accounts with failing pushes
             webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
             print(f"Sent ping {ping_id}")
 

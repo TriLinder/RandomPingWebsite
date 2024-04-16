@@ -53,6 +53,12 @@
     });
 </script>
 
+<style>
+    .ping-button {
+        margin-top: 15px;
+    }
+</style>
+
 <h1>Welcome back!</h1>
 
 <!-- Ensure correct plural form -->
@@ -68,10 +74,12 @@
 </label>
 
 <!-- The main ping button -->
-<Button on:click={pingButtonClick} disabled={timeUntilNextAllowedPing >= 0} color="primary" size="lg">
-    {#if timeUntilNextAllowedPing >= 0}
-        {Math.ceil(timeUntilNextAllowedPing / 1000)}s
-    {:else}
-        SEND PING
-    {/if}
-</Button>
+<div class="ping-button">
+    <Button on:click={pingButtonClick} disabled={timeUntilNextAllowedPing >= 0} color="primary" size="lg">
+        {#if timeUntilNextAllowedPing >= 0}
+            {Math.ceil(timeUntilNextAllowedPing / 1000)}s
+        {:else}
+            SEND PING
+        {/if}
+    </Button>
+</div>

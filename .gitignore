@@ -1,6 +1,6 @@
 venv/*
 node_modules/*
-app/static/*
+app/static/svelte/*
 */__pycache__/*
 database.db
 keys.json
