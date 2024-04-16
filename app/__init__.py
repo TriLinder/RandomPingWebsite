@@ -251,7 +251,11 @@ def post_user_update_notification_subscription_object():
     data = request.json
 
     user_id = uuid.UUID(data["user_id"]).hex
-    subscription = data["subscription"] #TODO: Validate subscription object! (This is the only place we accept completly user-generated data)
+    subscription = dict(data["subscription"]) #NOTE: This is the only place we accept completly user-generated data)
+
+    #Make sure the subscription object isn't too long
+    if len(json.dumps(subscription)) > 1200:
+        return {"ok": False, "error": f"Subscription object too long. ({len(json.dumps(subscription))})"}
 
     #Connect to DB
     conn, cursor = connect_db()
