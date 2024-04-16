@@ -1,9 +1,33 @@
 <script lang="ts">
-	import Unregistered from "./pages/unregistered/Unregistered.svelte";
-	
-	let currentPage: "unregistered" | "registered" = "unregistered";
+	import { onMount } from "svelte";
+	import { persistentDataStore } from "../stores";
+	import { fetchServerInformation, getPushServiceSubscriptionObject, updatePushServiceSubscriptionObject } from "../utils";
 
-	navigator.serviceWorker.register("./sw.js");
+	import Register from "./pages/Register.svelte";
+	import SendRandomPing from "./pages/SendRandomPing.svelte";
+	
+	let currentPage: "loading" | "register" | "sendRandomPing" = "loading";
+
+	onMount(async function() {
+		// Mount the service worker
+		navigator.serviceWorker.register("./sw.js");
+
+		// Check if already registered
+		if ($persistentDataStore.userInformation) {
+			// Update information
+			try {
+				await fetchServerInformation();
+				await updatePushServiceSubscriptionObject(await getPushServiceSubscriptionObject());
+			} catch(error) {
+				alert(error);
+				return;
+			}
+
+			currentPage = "sendRandomPing";
+		} else {
+			currentPage = "register";
+		}
+	});
 </script>
 
 <style>
@@ -30,8 +54,12 @@
 
 <div class="center">
 	<div class="content">
-		{#if currentPage == "unregistered"}
-			<Unregistered/>
+		{#if currentPage == "loading"}
+			Loading..
+		{:else if currentPage == "register"}
+			<Register on:registered={function() {currentPage = "sendRandomPing"}}/>
+		{:else if currentPage == "sendRandomPing"}
+			<SendRandomPing/>
 		{/if}
 	</div>
 </div>

@@ -79,4 +79,29 @@ export async function updatePushServiceSubscriptionObject(subscription: PushSubs
             subscription: subscription
         })
     });
+
+    if (response.status != 200) {
+        throw Error(`Unexpected status code: ${response.status}`);
+    }
+}
+
+
+export async function sendRandomPing() {
+    if (!get(persistentDataStore).userInformation) {
+        throw Error("User information not available")
+    }
+    
+    const response = await fetch("/ping/random", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: get(persistentDataStore).userInformation?.id
+        })
+    });
+
+    if (response.status != 200) {
+        throw Error(`Unexpected status code: ${response.status}`);
+    }
 }

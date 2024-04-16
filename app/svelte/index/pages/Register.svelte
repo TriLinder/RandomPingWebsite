@@ -1,10 +1,13 @@
 <script lang="ts">
-    import { fetchServerInformation, getPushServiceSubscriptionObject, registerAccount, updatePushServiceSubscriptionObject } from "../../../utils";
+    import { fetchServerInformation, getPushServiceSubscriptionObject, registerAccount, updatePushServiceSubscriptionObject } from "../../utils";
+    import { createEventDispatcher } from 'svelte';
     import { Button, Modal, Spinner } from '@sveltestrap/sveltestrap';
 
     let registering = false;
     let stage: "notificationPermission" | "fetchServerInfo" | "pushServiceSubscription" | "accountRegistration" | "error" = "notificationPermission";
     let errorMessage = "";
+
+    const dispatch = createEventDispatcher();
 
     function showErrorMessage(error) {
         errorMessage = error;
@@ -51,6 +54,7 @@
         
         // Done! :)
         // We will now be taken to the next page.
+        dispatch("registered");
     }
 </script>
 

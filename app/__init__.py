@@ -131,7 +131,7 @@ def process_waiting_pings():
             }
 
             print(f"Sending ping {ping_id}")
-            #webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
+            webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
             print(f"Sent ping {ping_id}")
 
             state = "success"

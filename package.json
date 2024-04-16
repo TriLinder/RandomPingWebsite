@@ -25,6 +25,8 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@sveltestrap/sveltestrap": "^6.2.7"
+    "@sveltestrap/sveltestrap": "^6.2.7",
+    "@types/canvas-confetti": "^1.6.4",
+    "canvas-confetti": "^1.9.2"
   }
 }

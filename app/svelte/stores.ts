@@ -9,6 +9,9 @@ type PersistentDataStore = {
     userInformation: undefined | {
         id: string;
         country: string;
+    },
+    stats: {
+        sentPingsCount: number;
     }
 }
 
@@ -25,7 +28,10 @@ function loadPersistentDataStore(): PersistentDataStore {
     return {
         "dataTypeVersion": 0,
         serverInformation: undefined,
-        userInformation: undefined
+        userInformation: undefined,
+        stats: {
+            sentPingsCount: 0
+        }
     }
 }
 
