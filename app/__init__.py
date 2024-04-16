@@ -60,6 +60,26 @@ def create_db_tables():
     conn.commit()
     disconnect_db(conn)
 
+def create_account(country):
+    #Random user ID
+    user_id = uuid.uuid4().hex
+
+    #Connect to DB
+    conn, cursor = connect_db()
+
+    #Commit to and close DB
+    cursor.execute("INSERT INTO users (id, country, next_allowed_ping_timestamp) VALUES (?, ?, ?)", (user_id, country, 0))
+    conn.commit()
+    disconnect_db(conn)
+
+    return {"user_id": user_id, "country": {"iso": country, "emoji": country_iso_code_to_emoji(country)}}
+
+def delete_account(user_id):
+    conn, cursor = connect_db()
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    disconnect_db(conn)
+
 def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origin=True, ignore_multiple_replies=False, ignore_user_ping_cooldown=False):
     conn, cursor = connect_db()
 
@@ -191,23 +211,21 @@ def get_info():
 
 @app.post("/user/register")
 def post_user_register():
-    #Random user ID
-    user_id = uuid.uuid4().hex
-
     #Get the user's country of origin
     #TODO: IMPLEMENT
     country = "US" 
 
-    #Connect to DB
-    conn, cursor = connect_db()
+    #Create account and send back its information
+    return create_account(country)
 
-    #Commit to and close DB
-    cursor.execute("INSERT INTO users (id, country, next_allowed_ping_timestamp) VALUES (?, ?, ?)", (user_id, country, 0))
-    conn.commit()
-    disconnect_db(conn)
+@app.post("/user/delete")
+def post_user_delete():
+    data = request.json
 
-    #Send back user information
-    return {"user_id": user_id, "country": {"iso": country, "emoji": country_iso_code_to_emoji(country)}}
+    user_id = uuid.UUID(data["user_id"]).hex
+    delete_account(user_id)
+
+    return {"ok": True}
 
 @app.post("/user/update_notification_subscription_object")
 def post_user_update_notification_subscription_object():

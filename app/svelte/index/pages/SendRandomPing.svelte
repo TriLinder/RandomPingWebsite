@@ -5,6 +5,7 @@
     import { sendRandomPing } from '../../utils';
 
     import { Button } from '@sveltestrap/sveltestrap';
+    import AccountDeletionLink from '../../components/AccountDeletionLink.svelte';
     
     let nextAllowedPingTimestamp = new Date(0);
     let currentTime = new Date();
@@ -57,6 +58,11 @@
     .ping-button {
         margin-top: 15px;
     }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+    }
 </style>
 
 <h1>Welcome back!</h1>
@@ -82,4 +88,8 @@
             SEND PING
         {/if}
     </Button>
+</div>
+
+<div class="footer">
+    <AccountDeletionLink/>
 </div>

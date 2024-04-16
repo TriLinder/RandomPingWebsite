@@ -4,6 +4,7 @@
     import { replyToPing } from '../../utils';
 
     import { Button } from '@sveltestrap/sveltestrap';
+    import AccountDeletionLink from '../../components/AccountDeletionLink.svelte';
 
     const replyTo = window.location.hash.substring(1); // The original ping's ID
     const pingSoundEffect = new Audio("/static/ping.mp3"); 
@@ -42,6 +43,11 @@
     .ping-button {
         margin-top: 15px;
     }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+    }
 </style>
 
 <h1>You got pinged!</h1>
@@ -52,4 +58,8 @@
     {:else}
         You have replied to this ping. <a href="#" on:click={function() {dispatch("returnToRandomPingPage")}}>Ping someone else</a>.
     {/if}
+</div>
+
+<div class="footer">
+    <AccountDeletionLink/>
 </div>

@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
 
+export const PERSISTENT_DATA_STORE_KEY = "trilinder.randomnotificationsite.persistentDataStore"; // Also duplicated in the service worker
+
 type PersistentDataStore = {
     dataTypeVersion: number;
     serverInformation: undefined | {
@@ -20,7 +22,7 @@ type PersistentDataStore = {
 
 function loadPersistentDataStore(): PersistentDataStore {
     // Load data from local storage if available
-    const localStorageValue = localStorage.getItem("trilinder.randomnotificationsite.persistentDataStore");
+    const localStorageValue = localStorage.getItem(PERSISTENT_DATA_STORE_KEY);
     
     if (localStorageValue) {
         return JSON.parse(localStorageValue) as PersistentDataStore;
@@ -41,11 +43,11 @@ function loadPersistentDataStore(): PersistentDataStore {
 export const persistentDataStore = writable<PersistentDataStore>(loadPersistentDataStore());
 
 persistentDataStore.subscribe(function(value) {
-    localStorage.setItem("trilinder.randomnotificationsite.persistentDataStore", JSON.stringify(value));
+    localStorage.setItem(PERSISTENT_DATA_STORE_KEY, JSON.stringify(value));
 });
 
 window.addEventListener("storage", function(event) {
-    if (event.key == "trilinder.randomnotificationsite.persistentDataStore") {
+    if (event.key == PERSISTENT_DATA_STORE_KEY) {
         persistentDataStore.set(loadPersistentDataStore());
     }
 });

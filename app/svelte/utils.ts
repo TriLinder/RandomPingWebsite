@@ -1,4 +1,4 @@
-import { persistentDataStore } from "./stores";
+import { persistentDataStore, PERSISTENT_DATA_STORE_KEY } from "./stores";
 import { get } from "svelte/store";
 
 export function base64ToUint8Array(base64String) {
@@ -52,6 +52,22 @@ export async function getPushServiceSubscriptionObject(): Promise<PushSubscripti
     return subscription;
 }
 
+export async function unsubscribeFromPushService() {
+    if (!get(persistentDataStore).serverInformation) {
+        await fetchServerInformation();
+    }
+    
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: get(persistentDataStore).serverInformation!.publicKey
+        });
+
+    if (!await subscription.unsubscribe()) {
+        throw Error("Failed to unsubscribe from push service.");
+    }
+}
+
 export async function registerAccount() {
     const response = await fetch("/user/register", {method: "POST"});
     const json = await response.json() as {user_id: string, country: {iso: string, emoji: string}};
@@ -65,6 +81,35 @@ export async function registerAccount() {
         }
     }
     persistentDataStore.set(persistentDataStoreValue);
+}
+
+export async function deleteAccount() {
+    if (!get(persistentDataStore).userInformation) {
+        throw Error("User information not available")
+    }
+
+    const response = await fetch("/user/delete", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: get(persistentDataStore).userInformation?.id
+        })
+    });
+
+    // Handle errors
+    if (response.status != 200) {
+        throw Error(`Unexpected status code: ${response.status}`);
+    }
+    const json = await response.json();
+    if (!json.ok) {
+        throw Error(json.error);
+    }
+
+    // Clear localstorage and reload the site
+    localStorage.removeItem(PERSISTENT_DATA_STORE_KEY)
+    location.reload();
 }
 
 export async function updatePushServiceSubscriptionObject(subscription: PushSubscription) {
