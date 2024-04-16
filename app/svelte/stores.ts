@@ -48,6 +48,6 @@ persistentDataStore.subscribe(function(value) {
 
 window.addEventListener("storage", function(event) {
     if (event.key == PERSISTENT_DATA_STORE_KEY) {
-        persistentDataStore.set(loadPersistentDataStore());
+        location.reload();
     }
 });
