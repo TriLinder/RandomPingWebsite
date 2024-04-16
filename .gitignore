@@ -1,3 +1,6 @@
 venv/*
+node_modules/*
+app/static/*
+*/__pycache__/*
 database.db
 keys.json

@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_svelte import render_template
 import sqlite3
 import uuid
 import json
@@ -157,6 +158,10 @@ def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
         return "Somebody pinged you!"
 
 # --------------------------------------------------------------------------- #
+
+@app.route('/')
+def index():
+    return render_template('index.html', name='World')
 
 @app.get("/info")
 def get_info():
