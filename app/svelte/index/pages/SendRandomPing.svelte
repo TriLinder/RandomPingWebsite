@@ -76,7 +76,7 @@
 
 <label>
     <input bind:checked={displayCountryOfOrigin} type="checkbox">
-    Include the country of origin in the ping ({$persistentDataStore.userInformation.country.emoji})
+    Include the country of origin in this ping ({$persistentDataStore.userInformation.country.emoji})
 </label>
 
 <!-- The main ping button -->
