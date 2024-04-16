@@ -126,8 +126,11 @@ def process_waiting_pings():
             
             #Send the data
             data = {
-                "id": ping_id,
-                "text": ping_text
+                "title": "Random ping received!",
+                "options": {
+                    "id": ping_id,
+                    "body": ping_text
+                }
             }
 
             print(f"Sending ping {ping_id}")
