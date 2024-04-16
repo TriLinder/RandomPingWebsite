@@ -7,6 +7,10 @@ import time
 import threading
 from pywebpush import webpush
 
+#For offline IP geolocation
+import geoacumen
+import maxminddb
+
 app = Flask(__name__)
 
 SQLITE_DB_PATH = "database.db"
@@ -178,13 +182,26 @@ def process_waiting_pings():
 
     ping_processing_lock.release()
 
+def locate_ip_country(ip_address):
+    try:
+        reader = maxminddb.open_database(geoacumen.db_path)
+        country = reader.get(ip_address)
+
+        if not country["iso_code"]:
+            return None
+
+        return country["iso_code"]
+    except Exception as e:
+        print(f"Failed to locate ip: {ip_address}")
+        return None
+
 def country_iso_code_to_emoji(country_iso_code):
+    #Invalid ISO code
+    if not country_iso_code or len(country_iso_code) != 2 or not country_iso_code.isalpha():
+        return "❔"
+    
     country_iso_code = country_iso_code.upper()
     OFFSET = ord('🇦') - ord('A')
-
-    #Invalid ISO code
-    if len(country_iso_code) != 2 or not country_iso_code.isalpha():
-        return "❔"
     
     emoji_sequence = ''.join(chr(ord(c) + OFFSET) for c in country_iso_code)
     return emoji_sequence
@@ -215,8 +232,7 @@ def get_info():
 @app.post("/user/register")
 def post_user_register():
     #Get the user's country of origin
-    #TODO: IMPLEMENT
-    country = "US" 
+    country = locate_ip_country(request.remote_addr)
 
     #Create account and send back its information
     return create_account(country)
