@@ -79,6 +79,7 @@ def delete_account(user_id):
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     disconnect_db(conn)
+    print(f"Deleted account {user_id}")
 
 def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origin=True, ignore_multiple_replies=False, ignore_user_ping_cooldown=False):
     conn, cursor = connect_db()
@@ -132,13 +133,13 @@ def process_waiting_pings():
     #Get list of waiting pings, and for each the origin user's country and target user's notification subscription object
     conn, cursor = connect_db()
 
-    cursor.execute("SELECT pings.id, from_users.country, pings.display_country_of_origin, pings.reply_to, users.notification_subscription FROM pings INNER JOIN users ON pings.to_user = users.id INNER JOIN users AS from_users ON pings.from_user = from_users.id WHERE pings.state = 'waiting'")
+    cursor.execute("SELECT pings.id, pings.to_user, from_users.country, pings.display_country_of_origin, pings.reply_to, users.notification_subscription FROM pings INNER JOIN users ON pings.to_user = users.id INNER JOIN users AS from_users ON pings.from_user = from_users.id WHERE pings.state = 'waiting'")
     pings = cursor.fetchall()
     
     disconnect_db(conn)
     
     for ping in pings:
-        ping_id, country_of_origin, display_country_of_origin, reply_to, notification_subscription = ping
+        ping_id, to_user, country_of_origin, display_country_of_origin, reply_to, notification_subscription = ping
 
         #Try to send the notification
         try:
@@ -157,7 +158,6 @@ def process_waiting_pings():
             }
 
             print(f"Sending ping {ping_id}")
-            #TODO: Remove accounts with failing pushes
             webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
             print(f"Sent ping {ping_id}")
 
@@ -165,6 +165,9 @@ def process_waiting_pings():
         except Exception as e:
             print(e)
             state = "failed"
+
+            #Delete the account
+            delete_account(to_user)
 
         #Update ping's state in DB
         conn, cursor = connect_db()
