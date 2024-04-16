@@ -8,7 +8,10 @@ type PersistentDataStore = {
     }
     userInformation: undefined | {
         id: string;
-        country: string;
+        country: {
+            iso: string,
+            emoji: string
+        };
     },
     stats: {
         sentPingsCount: number;

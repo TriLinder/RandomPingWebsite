@@ -54,12 +54,15 @@ export async function getPushServiceSubscriptionObject(): Promise<PushSubscripti
 
 export async function registerAccount() {
     const response = await fetch("/user/register", {method: "POST"});
-    const json = await response.json() as {user_id: string, country: string};
+    const json = await response.json() as {user_id: string, country: {iso: string, emoji: string}};
 
     const persistentDataStoreValue = get(persistentDataStore);
     persistentDataStoreValue.userInformation = {
         id: json.user_id,
-        country: json.country
+        country: {
+            iso: json.country.iso,
+            emoji: json.country.emoji
+        }
     }
     persistentDataStore.set(persistentDataStoreValue);
 }

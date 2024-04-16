@@ -151,12 +151,23 @@ def process_waiting_pings():
 
     ping_processing_lock.release()
 
+def country_iso_code_to_emoji(country_iso_code):
+    country_iso_code = country_iso_code.upper()
+    OFFSET = ord('🇦') - ord('A')
+
+    #Invalid ISO code
+    if len(country_iso_code) != 2 or not country_iso_code.isalpha():
+        return "❔"
+    
+    emoji_sequence = ''.join(chr(ord(c) + OFFSET) for c in country_iso_code)
+    return emoji_sequence
+
 def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
     if is_reply: #Never reveal country of origin in a reply
         return "Somebody pinged you back!"
     
     if display_country_of_origin:
-        return f"Somebody from {country_of_origin} pinged you!"
+        return f"Somebody from {country_iso_code_to_emoji(country_of_origin)} has pinged you!"
     else:
         return "Somebody pinged you!"
 
@@ -192,7 +203,7 @@ def post_user_register():
     disconnect_db(conn)
 
     #Send back user information
-    return {"user_id": user_id, "country": country}
+    return {"user_id": user_id, "country": {"iso": country, "emoji": country_iso_code_to_emoji(country)}}
 
 @app.post("/user/update_notification_subscription_object")
 def post_user_update_notification_subscription_object():
