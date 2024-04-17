@@ -11,7 +11,11 @@
 
 	onMount(async function() {
 		// Mount the service worker
-		navigator.serviceWorker.register("./sw.js");
+		try {
+			navigator.serviceWorker.register("./sw.js");
+		} catch(error) {
+			alert("Failed to register the service worker! Are you in private mode or not using a modern browser? Please try again.")
+		}
 
 		// Check if already registered
 		if ($persistentDataStore.userInformation) {
