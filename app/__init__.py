@@ -210,12 +210,12 @@ def send_notification(user_id, data, ttl=30*60):
 def locate_ip_country(ip_address):
     try:
         reader = maxminddb.open_database(geoacumen.db_path)
-        country = reader.get(ip_address)
+        location = reader.get(ip_address)
 
-        if not country["iso_code"]:
+        if not location["country"]["iso_code"]:
             return None
 
-        return country["iso_code"]
+        return location["country"]["iso_code"].upper()
     except Exception as e:
         print(f"Failed to locate ip: {ip_address}")
         return None
