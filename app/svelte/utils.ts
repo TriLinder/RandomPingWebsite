@@ -134,7 +134,8 @@ export async function updatePushServiceSubscriptionObject(subscription: PushSubs
     }
     const json = await response.json();
     if (!json.ok) {
-        throw Error(json.error);
+        // If the update fails, the account probably doesn't exist anymore
+        await deleteAccount();
     }
 }
 

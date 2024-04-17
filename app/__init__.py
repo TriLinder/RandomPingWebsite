@@ -89,26 +89,34 @@ def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origi
     conn, cursor = connect_db()
 
     #In case of a reply, check that the original ping wasn't already replied to and specify to_user
-    if reply_to:
-        cursor.execute("SELECT COUNT(*) FROM pings WHERE reply_to = ?", (reply_to,))
-        count = cursor.fetchone()[0]
-        
-        #The original ping was already replied to
-        if count >= 1 and not ignore_multiple_replies:
-            disconnect_db(conn)
-            return {"ok": False, "error": "You have already replied to this ping."}
-        
-        #Find the target user's id
-        cursor.execute("SELECT from_user FROM pings WHERE id = ?", (reply_to,))
-        to_user = cursor.fetchone()[0]
+    try:
+        if reply_to:
+            cursor.execute("SELECT COUNT(*) FROM pings WHERE reply_to = ?", (reply_to,))
+            count = cursor.fetchone()[0]
+            
+            #The original ping was already replied to
+            if count >= 1 and not ignore_multiple_replies:
+                disconnect_db(conn)
+                raise Exception("You have already replied to this ping.")
+            
+            #Find the target user's id
+            cursor.execute("SELECT from_user FROM pings WHERE id = ?", (reply_to,))
+            to_user = cursor.fetchone()[0]
+    except Exception as e:
+        disconnect_db(conn)
+        raise Exception(f"Failed to find ping information: {Exception}")
 
     #Check if the sending user can send a ping (that they aren't on cooldown)
-    cursor.execute("SELECT next_allowed_ping_timestamp FROM users WHERE id = ?", (from_user,))
-    next_allowed_ping_timestamp = cursor.fetchone()[0]
+    try:
+        cursor.execute("SELECT next_allowed_ping_timestamp FROM users WHERE id = ?", (from_user,))
+        next_allowed_ping_timestamp = cursor.fetchone()[0]
+    except Exception as e:
+        disconnect_db(conn)
+        raise Exception(f"Failed to load user information ({e})")
 
     if next_allowed_ping_timestamp > time.time() and not ignore_user_ping_cooldown:
         disconnect_db(conn)
-        return {"ok": False, "error": f"You must wait before sending another ping. ({round(next_allowed_ping_timestamp - time.time())}s)"}
+        raise Exception(f"You must wait before sending another ping. ({round(next_allowed_ping_timestamp - time.time())}s)")
 
     #Select a random to_user if not specified
     if not to_user:
@@ -128,8 +136,6 @@ def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origi
 
     #Start a new thread to process the ping
     threading.Thread(target=process_waiting_pings).start()
-
-    return {"ok": True}
 
 def process_waiting_pings():
     ping_processing_lock.acquire(timeout=5*60)
@@ -248,8 +254,8 @@ def post_user_register():
 @app.post("/user/delete")
 def post_user_delete():
     data = request.json
-
     user_id = uuid.UUID(data["user_id"]).hex
+    
     delete_account(user_id)
 
     return {"ok": True}
@@ -273,6 +279,10 @@ def post_user_update_notification_subscription_object():
     conn.commit()
     disconnect_db(conn)
 
+    #Check amount of changed rows (should be 1)
+    if cursor.rowcount != 1:
+        return {"ok": False}
+
     return {"ok": True}
 
 @app.post("/ping/random")
@@ -282,7 +292,11 @@ def post_ping_random():
     from_user = uuid.UUID(data["user_id"]).hex
     display_country_of_origin = bool(data["display_country_of_origin"])
 
-    return create_ping(from_user, display_country_of_origin=display_country_of_origin)
+    try:
+        create_ping(from_user, display_country_of_origin=display_country_of_origin)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 @app.post("/ping/reply")
 def post_ping_reply():
@@ -291,7 +305,11 @@ def post_ping_reply():
     from_user = uuid.UUID(data["user_id"]).hex
     reply_to = uuid.UUID(data["reply_to"]).hex
 
-    return create_ping(from_user, reply_to=reply_to)
+    try:
+        create_ping(from_user, reply_to=reply_to)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 if __name__ == "__main__":
     create_db_tables()
