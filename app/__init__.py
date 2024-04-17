@@ -155,6 +155,14 @@ def process_waiting_pings():
                 "options": {
                     "id": ping_id,
                     "body": ping_text,
+                    "requireInteraction": True,
+                    "vibrate": [300, 100, 400],
+                    "actions": [
+                        {
+                            "action": "reply",
+                            "title": "Ping back!"
+                        }
+                    ],
                     "data": {
                         "url": f"/#{ping_id}"
                     }
@@ -208,12 +216,12 @@ def country_iso_code_to_emoji(country_iso_code):
 
 def generate_ping_text(display_country_of_origin, country_of_origin, is_reply):
     if is_reply: #Never reveal country of origin in a reply
-        return "Somebody has pinged you back!"
+        return "Somebody has pinged you back! Click to ping them back again!"
     
     if display_country_of_origin:
-        return f"Somebody from {country_iso_code_to_emoji(country_of_origin)} has pinged you!"
+        return f"Somebody from {country_iso_code_to_emoji(country_of_origin)} has pinged you! Click to ping them back"
     else:
-        return "Somebody has pinged you!"
+        return "Somebody has pinged you! Click to ping them back"
 
 # --------------------------------------------------------------------------- #
 
