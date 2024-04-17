@@ -109,11 +109,11 @@ def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origi
 
     #Check if the sending user can send a ping (that they aren't on cooldown)
     try:
-        cursor.execute("SELECT next_allowed_ping_timestamp FROM users WHERE id = ?", (from_user,))
+        cursor.execute("SELECT next_allowed_ping_timestamp FROM users WHERE creation_finalized = TRUE AND id = ?", (from_user,))
         next_allowed_ping_timestamp = cursor.fetchone()[0]
     except Exception as e:
         disconnect_db(conn)
-        raise Exception(f"Failed to load user information ({e})")
+        raise Exception(f"Failed to load user information ({e}). Please try deleting and creating your account again if needed.")
 
     if next_allowed_ping_timestamp > time.time() and not ignore_user_ping_cooldown:
         disconnect_db(conn)
@@ -121,7 +121,7 @@ def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origi
 
     #Select a random to_user if not specified
     if not to_user:
-        cursor.execute("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")
+        cursor.execute("SELECT id FROM users WHERE creation_finalized = TRUE ORDER BY RANDOM() LIMIT 1")
         to_user = cursor.fetchone()[0]
 
     #Create the ping
@@ -293,6 +293,33 @@ def post_user_update_notification_subscription_object():
     #Check amount of changed rows (should be 1)
     if cursor.rowcount != 1:
         return {"ok": False}
+
+    return {"ok": True}
+
+@app.post("/user/finalize_creation")
+def post_user_finalize_creation():
+    data = request.json
+    user_id = uuid.UUID(data["user_id"]).hex
+
+    #Finalize the account creation process by sending a test notification
+    #to check everyting works.
+    try:
+        data = {
+            "title": "Hello, world! 👋",
+            "options": {
+                "body": "Welcome! This is what pings from other users will look like."
+            }
+        }
+
+        send_notification(user_id, data)
+    except Exception as e:
+        return {"ok": False, "error": "Failed to send initial testing notification. Please try again later."}
+
+    #Great! Save the finalized state to the DB
+    conn, cursor = connect_db()
+    cursor.execute("UPDATE users SET creation_finalized = TRUE WHERE id = ?", (user_id,))
+    conn.commit()
+    disconnect_db(conn)
 
     return {"ok": True}
 

@@ -139,6 +139,32 @@ export async function updatePushServiceSubscriptionObject(subscription: PushSubs
     }
 }
 
+export async function finalizeAccountCreation() {
+    if (!get(persistentDataStore).userInformation) {
+        throw Error("User information not available")
+    }
+
+    const response = await fetch("/user/finalize_creation", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: get(persistentDataStore).userInformation?.id
+        })
+    });
+    
+    if (response.status != 200) {
+        throw Error(`Unexpected status code: ${response.status}`);
+    }
+    const json = await response.json();
+    if (!json.ok) {
+        // This is an error during the account creation process.
+        // Alert the user and delete the account.
+        alert(json.error);
+        await deleteAccount();
+    }
+}
 
 export async function sendRandomPing(displayCountryOfOrigin = true) {
     if (!get(persistentDataStore).userInformation) {

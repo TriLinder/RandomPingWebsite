@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { fetchServerInformation, getPushServiceSubscriptionObject, registerAccount, updatePushServiceSubscriptionObject } from "../../utils";
+    import { fetchServerInformation, getPushServiceSubscriptionObject, registerAccount, updatePushServiceSubscriptionObject, finalizeAccountCreation } from "../../utils";
     import { createEventDispatcher } from 'svelte';
     import { Button, Modal, Spinner } from '@sveltestrap/sveltestrap';
 
     let registering = false;
-    let stage: "notificationPermission" | "fetchServerInfo" | "pushServiceSubscription" | "accountRegistration" | "error" = "notificationPermission";
+    let stage: "notificationPermission" | "fetchServerInfo" | "pushServiceSubscription" | "accountRegistration" | "finalizing" | "error" = "notificationPermission";
     let errorMessage = "";
 
     const dispatch = createEventDispatcher();
@@ -42,7 +42,7 @@
             return;
         }
 
-        // Now, finally, register an account and attach the subscription object to it
+        // Register an account and attach the subscription object to it
         stage = "accountRegistration";
         try {
             await registerAccount();
@@ -51,6 +51,13 @@
             showErrorMessage(`Failed to send information to server: ${error}`);
             return;
         }
+
+        // And finally, finalize the account creation process by sending a test notification.
+        // This is required for being able to send and recieve pings.
+        // If this fails, the account is automatically deleted and this page is reloaded, so
+        // there's no point in handling any errors.
+        stage = "finalizing";
+        await finalizeAccountCreation();
         
         // Done! :)
         // We will now be taken to the next page.
@@ -86,6 +93,9 @@
             <Spinner type="border" color="primary"/>
         {:else if stage == "accountRegistration"}
             Sending data to server <br>
+            <Spinner type="border" color="primary"/>
+        {:else if stage == "finalizing"}
+            Finalizing. Please wait, this can take a while. <br>
             <Spinner type="border" color="primary"/>
         {:else if stage == "error"}
             <h2>Error</h2>
