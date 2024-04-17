@@ -43,6 +43,7 @@ def create_db_tables():
     #Create tables if they don't exist already
     cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY,
+                    creation_finalized BOOLEAN,
                     country TEXT,
                     notification_subscription TEXT,
                     next_allowed_ping_timestamp INTEGER
@@ -64,7 +65,7 @@ def create_db_tables():
     conn.commit()
     disconnect_db(conn)
 
-def create_account(country):
+def create_account(country, creation_finalized=False):
     #Random user ID
     user_id = uuid.uuid4().hex
 
@@ -72,7 +73,7 @@ def create_account(country):
     conn, cursor = connect_db()
 
     #Commit to and close DB
-    cursor.execute("INSERT INTO users (id, country, next_allowed_ping_timestamp) VALUES (?, ?, ?)", (user_id, country, 0))
+    cursor.execute("INSERT INTO users (id, creation_finalized, country, next_allowed_ping_timestamp) VALUES (?, ?, ?, ?)", (user_id, creation_finalized, country, 0))
     conn.commit()
     disconnect_db(conn)
 
@@ -140,16 +141,16 @@ def create_ping(from_user, to_user=None, reply_to=None, display_country_of_origi
 def process_waiting_pings():
     ping_processing_lock.acquire(timeout=5*60)
 
-    #Get list of waiting pings, and for each the origin user's country and target user's notification subscription object
+    #Get list of waiting pings, and for each the origin user's country
     conn, cursor = connect_db()
 
-    cursor.execute("SELECT pings.id, pings.to_user, from_users.country, pings.display_country_of_origin, pings.reply_to, users.notification_subscription FROM pings INNER JOIN users ON pings.to_user = users.id INNER JOIN users AS from_users ON pings.from_user = from_users.id WHERE pings.state = 'waiting'")
+    cursor.execute("SELECT pings.id, pings.to_user, from_users.country, pings.display_country_of_origin, pings.reply_to FROM pings INNER JOIN users AS from_users ON pings.from_user = from_users.id WHERE pings.state = 'waiting'")
     pings = cursor.fetchall()
     
     disconnect_db(conn)
     
     for ping in pings:
-        ping_id, to_user, country_of_origin, display_country_of_origin, reply_to, notification_subscription = ping
+        ping_id, to_user, country_of_origin, display_country_of_origin, reply_to = ping
 
         #Try to send the notification
         try:
@@ -176,7 +177,7 @@ def process_waiting_pings():
             }
 
             print(f"Sending ping {ping_id}")
-            webpush(subscription_info=json.loads(notification_subscription), data=json.dumps(data), ttl=30*60, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
+            send_notification(to_user, data)
             print(f"Sent ping {ping_id}")
 
             state = "success"
@@ -195,6 +196,16 @@ def process_waiting_pings():
         disconnect_db(conn)
 
     ping_processing_lock.release()
+
+def send_notification(user_id, data, ttl=30*60):
+    #Get the user's notification subscription object
+    conn, cursor = connect_db()
+    cursor.execute("SELECT notification_subscription FROM users WHERE id = ?", (user_id,))
+    subscription = cursor.fetchone()[0]
+    disconnect_db(conn)
+
+    #Send the notification
+    webpush(subscription_info=json.loads(subscription), data=json.dumps(data), ttl=ttl, vapid_private_key=PRIVATE_KEY, vapid_claims={"sub":"mailto:dev@example.com"})
 
 def locate_ip_country(ip_address):
     try:
